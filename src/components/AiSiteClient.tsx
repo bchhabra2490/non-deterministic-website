@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { NavigateInteraction } from "@/lib/ai-events";
-import { finalizeAiMarkup, sanitizeAiHtml } from "@/lib/html-postprocess";
 
 /** Same-origin History API update: address bar follows the link without a document navigation. */
 function pushUrlFromLinkHref(href: string): void {
@@ -30,54 +29,26 @@ function isAbortError(e: unknown): boolean {
   );
 }
 
-function cancelRaf(rafRef: { current: number | null }) {
-  if (rafRef.current != null) {
-    cancelAnimationFrame(rafRef.current);
-    rafRef.current = null;
-  }
-}
-
-async function postRenderStream(
+async function postRender(
   body: Record<string, unknown>,
-  signal: AbortSignal,
-  onRawDelta: (cumulativeRaw: string) => void
+  signal: AbortSignal
 ): Promise<string> {
   const res = await fetch("/api/render", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...body, stream: true }),
+    body: JSON.stringify(body),
     signal,
   });
 
-  const ct = res.headers.get("content-type") ?? "";
+  const data = (await res.json()) as { html?: string; error?: string };
 
   if (!res.ok) {
-    if (ct.includes("application/json")) {
-      const data = (await res.json()) as { error?: string };
-      throw new Error(data.error ?? `Request failed (${res.status})`);
-    }
-    const text = await res.text();
-    throw new Error(text || `Request failed (${res.status})`);
+    throw new Error(data.error ?? `Request failed (${res.status})`);
   }
 
-  if (!res.body) {
-    throw new Error("Empty response body");
-  }
-
-  const reader = res.body.getReader();
-  const decoder = new TextDecoder();
-  let raw = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    raw += decoder.decode(value, { stream: true });
-    onRawDelta(raw);
-  }
-
-  const html = finalizeAiMarkup(raw);
-  if (!html.trim()) {
-    throw new Error("Empty model response");
+  const html = data.html?.trim() ?? "";
+  if (!html) {
+    throw new Error("No HTML in response");
   }
   return html;
 }
@@ -85,28 +56,14 @@ async function postRenderStream(
 export function AiSiteClient() {
   const flightRef = useRef<AbortController | null>(null);
   const shellKeyRef = useRef(0);
-  const previewRafRef = useRef<number | null>(null);
-  const pendingRawRef = useRef("");
 
   const [shellKey, setShellKey] = useState(0);
   const [liveHtml, setLiveHtml] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loadingNav, setLoadingNav] = useState(false);
 
-  const queueStreamingPreview = useCallback((raw: string) => {
-    const generation = shellKeyRef.current;
-    pendingRawRef.current = raw;
-    if (previewRafRef.current != null) return;
-    previewRafRef.current = requestAnimationFrame(() => {
-      previewRafRef.current = null;
-      if (shellKeyRef.current !== generation) return;
-      setLiveHtml(sanitizeAiHtml(pendingRawRef.current));
-    });
-  }, []);
-
   const beginFlight = useCallback(() => {
     flightRef.current?.abort();
-    cancelRaf(previewRafRef);
     shellKeyRef.current += 1;
     setShellKey(shellKeyRef.current);
     setLiveHtml("");
@@ -115,32 +72,20 @@ export function AiSiteClient() {
     return ac;
   }, []);
 
-  const finishStreamToDom = useCallback(
-    (finalHtml: string) => {
-      cancelRaf(previewRafRef);
-      setLiveHtml(finalHtml);
-    },
-    []
-  );
-
   const loadInitial = useCallback(async () => {
     const ac = beginFlight();
     setError(null);
     setLoadingNav(true);
     try {
-      const html = await postRenderStream(
-        { type: "initial" },
-        ac.signal,
-        queueStreamingPreview
-      );
-      finishStreamToDom(html);
+      const html = await postRender({ type: "initial" }, ac.signal);
+      setLiveHtml(html);
     } catch (e) {
       if (isAbortError(e)) return;
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoadingNav(false);
     }
-  }, [beginFlight, finishStreamToDom, queueStreamingPreview]);
+  }, [beginFlight]);
 
   const navigateWith = useCallback(
     async (interaction: NavigateInteraction) => {
@@ -148,12 +93,11 @@ export function AiSiteClient() {
       setError(null);
       setLoadingNav(true);
       try {
-        const html = await postRenderStream(
+        const html = await postRender(
           { type: "navigate", interaction },
-          ac.signal,
-          queueStreamingPreview
+          ac.signal
         );
-        finishStreamToDom(html);
+        setLiveHtml(html);
         window.scrollTo(0, 0);
       } catch (e) {
         if (isAbortError(e)) return;
@@ -162,7 +106,7 @@ export function AiSiteClient() {
         setLoadingNav(false);
       }
     },
-    [beginFlight, finishStreamToDom, queueStreamingPreview]
+    [beginFlight]
   );
 
   useEffect(() => {
@@ -174,13 +118,9 @@ export function AiSiteClient() {
 
     void (async () => {
       try {
-        const html = await postRenderStream(
-          { type: "initial" },
-          ac.signal,
-          queueStreamingPreview
-        );
+        const html = await postRender({ type: "initial" }, ac.signal);
         if (cancelled || ac.signal.aborted) return;
-        finishStreamToDom(html);
+        setLiveHtml(html);
       } catch (e) {
         if (isAbortError(e) || cancelled) return;
         setError(e instanceof Error ? e.message : "Failed to load");
@@ -192,9 +132,8 @@ export function AiSiteClient() {
     return () => {
       cancelled = true;
       ac.abort();
-      cancelRaf(previewRafRef);
     };
-  }, [beginFlight, finishStreamToDom, queueStreamingPreview]);
+  }, [beginFlight]);
 
   function onInteractClick(e: React.MouseEvent<HTMLDivElement>) {
     const target = e.target as HTMLElement | null;
@@ -243,9 +182,25 @@ export function AiSiteClient() {
 
   return (
     <div
-      className="min-h-full flex-1 flex flex-col"
+      className="relative min-h-full flex-1 flex flex-col"
       aria-busy={loadingNav}
     >
+      <span className="sr-only" aria-live="polite">
+        {loadingNav ? "Loading" : ""}
+      </span>
+
+      {loadingNav ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-20 flex items-center justify-center"
+          aria-hidden
+        >
+          <div
+            className="h-9 w-9 animate-spin rounded-full border-2 border-zinc-200 border-t-zinc-700"
+            role="presentation"
+          />
+        </div>
+      ) : null}
+
       {error ? (
         <div className="sr-only" role="alert">
           {error}
