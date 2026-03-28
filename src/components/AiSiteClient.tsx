@@ -240,7 +240,7 @@ export function AiSiteClient() {
 
   return (
     <div
-      className="relative min-h-full flex-1 flex flex-col"
+      className="relative min-h-full flex-1 flex flex-col bg-white"
       aria-busy={loadingNav}
     >
       <span className="sr-only" aria-live="polite">
