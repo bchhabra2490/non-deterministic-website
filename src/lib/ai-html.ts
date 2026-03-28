@@ -53,20 +53,16 @@ function userMessage(event: RenderEvent): string {
     case "initial":
       return [
         "Event: INITIAL_LOAD.",
-        "Deliver a short initial screenful plus clear below-the-fold content so the page feels substantial on its own.",
-        "Site name to reflect in nav/hero copy: \"Non-Deterministic Site\" (playful, honest about variability).",
-        "Structure (all Tailwind-styled):",
-        "1) Sticky top nav with brand, 4–6 in-app links, and one primary CTA button.",
-        "2) Hero: strong headline, subcopy, dual CTAs (link + button), optional badge or stats row.",
-        "3) Logo cloud or trust strip (placeholder names).",
-        "4) Features: 3–6 cards in a responsive grid with icons or emoji, title, and 2–3 sentences each.",
-        "5) Social proof: 2–3 testimonial cards with quotes and attribution.",
-        "6) How it works: 3–5 numbered steps with short explanations.",
-        "7) Pricing or plans teaser (2–3 tiers) with bullets and buttons/links.",
-        "8) FAQ: 4–6 disclosure-style Q&As (use <details>/<summary> with Tailwind).",
-        "9) Final CTA band (contrasting background) + compact footer with inline links.",
-        "Aim for roughly 900–1400 words of visible copy across these sections; keep paragraphs short and readable.",
-        "Every section must keep foreground text clearly separated from its background color (no same-shade text/bg in Tailwind).",
+        "Keep the page SMALL: one lightweight screen, fast to scan. Do not build a long marketing site.",
+        "Site name in nav/hero: \"Non-Deterministic Site\" (playful, honest about variability).",
+        "Structure (all Tailwind-styled, minimal):",
+        "1) Compact top bar: brand + 2–4 in-app links + one primary <button type=\"button\"> or link CTA.",
+        "2) Hero: one headline, one short paragraph (2–3 sentences max), one secondary link or button.",
+        "3) One small block only: either a 2–3 item bullet list OR two tiny feature blurbs (title + one line each)—not both.",
+        "4) Optional single <details>/<summary> FAQ item OR omit if it adds bulk.",
+        "5) Tiny footer line with 1–2 links.",
+        "Cap total visible copy at about 120–220 words. No testimonials grid, pricing tables, logo walls, or multi-section long scroll.",
+        "Every element must keep foreground text clearly separated from its background (no same-shade text/bg in Tailwind).",
       ].join("\n");
     case "navigate":
       if (event.interaction.kind === "link") {
@@ -98,7 +94,7 @@ export function renderMessages(event: RenderEvent): ChatCompletionMessageParam[]
   ];
 }
 
-/** Streams raw model text (UTF-8). Client runs {@link finalizeAiMarkup}. */
+/** Streams raw model text (UTF-8). Caller should run {@link finalizeAiMarkup} on the full buffer if used client-side. */
 export function createAiHtmlReadableStream(event: RenderEvent): ReadableStream<Uint8Array> {
   const encoder = new TextEncoder();
   return new ReadableStream({
