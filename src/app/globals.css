@@ -1,4 +1,108 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/*
+  Dynamic HTML from the LLM is injected at runtime; Tailwind cannot see those class names.
+  Safelist common scales so utilities the model emits are actually generated.
+*/
+@source inline("{hover:,focus:,active:,group-hover:,dark:,sm:,md:,lg:,xl:}{flex,flex-col,flex-row,flex-wrap,flex-1,inline-flex,grid,block,inline-block,hidden,contents}");
+@source inline("{sm:,md:,lg:,xl:}{grid-cols-1,grid-cols-2,grid-cols-3,grid-cols-4,grid-cols-5,grid-cols-6}");
+@source inline("col-span-1,col-span-2,col-span-3,col-span-4,col-span-full,row-span-2,row-start-1,row-end-2");
+@source inline("{items,justify,content}-{start,center,end,between,around,stretch}");
+@source inline("gap-{0,1,2,3,4,5,6,8,10,12,16,20,24}");
+@source inline("{gap-x,gap-y}-{0,2,4,6,8,12,16}");
+@source inline("w-full,w-screen,w-auto,w-fit,min-w-0,max-w-full,h-full,h-auto,h-screen,min-h-{0,screen},max-h-{96,screen}");
+@source inline("max-w-{sm,md,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,prose}");
+@source inline("{p,px,py,pt,pb,pl,pr,mx,my,mt,mb,ml,mr,space-x,space-y}-{0,1,2,3,4,5,6,8,10,12,16,20,24}");
+@source inline("space-x-reverse,space-y-reverse");
+@source inline("text-{left,center,right,justify,start,end}");
+@source inline("text-{xs,sm,base,lg,xl,2xl,3xl,4xl,5xl,6xl,7xl,8xl,9xl}");
+@source inline("font-{thin,extralight,light,normal,medium,semibold,bold,extrabold,black}");
+@source inline("leading-{3,4,5,6,7,8,9,10,none,tight,snug,normal,relaxed,loose}");
+@source inline("tracking-{tighter,tight,normal,wide,wider,widest}");
+@source inline("uppercase,lowercase,capitalize,normal-case,italic,not-italic,antialiased,subpixel-antialiased");
+@source inline("list-{none,disc,decimal,inside,outside}");
+@source inline("whitespace-{normal,nowrap,pre,pre-line,pre-wrap}");
+@source inline("break-words,break-all,truncate,text-ellipsis,text-clip");
+@source inline("rounded,rounded-{none,sm,md,lg,xl,2xl,3xl,full}");
+@source inline("border,border-{0,2,4,8},border-{t,r,b,l},border-x,border-y");
+@source inline("shadow,shadow-{sm,md,lg,xl,2xl,inner,none}");
+@source inline("ring,ring-0,ring-1,ring-2,ring-4,ring-inset,ring-offset-2,ring-offset-background");
+@source inline("bg-gradient-to-{t,tr,r,br,b,bl,l,tl},bg-none");
+@source inline("from-transparent,via-transparent,to-transparent");
+@source inline("from-current,to-current,via-current");
+@source inline("bg-fixed,bg-local,bg-scroll,bg-clip-border,bg-clip-padding,bg-clip-content,bg-clip-text");
+@source inline("bg-origin-border,bg-origin-padding,bg-origin-content");
+@source inline("bg-repeat,bg-no-repeat,bg-repeat-x,bg-repeat-y,bg-repeat-round,bg-repeat-space");
+@source inline("bg-auto,bg-cover,bg-contain,bg-center,bg-top,bg-bottom,bg-left,bg-right");
+@source inline("bg-size-{auto,cover,contain}");
+@source inline("bg-position-{center,top,bottom,left,right}");
+@source inline("mix-blend-{normal,multiply,screen,overlay}");
+@source inline("z-0,z-10,z-20,z-30,z-40,z-50");
+@source inline("order-1,order-2,order-3,order-first,order-last");
+@source inline("cursor-pointer,cursor-default,cursor-not-allowed");
+@source inline("resize,resize-none,resize-y,resize-x");
+@source inline("align-baseline,align-top,align-middle,align-bottom,align-text-top,align-text-bottom");
+@source inline("bg-gray-{50,{100..900..100},950}");
+@source inline("text-gray-{50,{100..900..100},950}");
+@source inline("border-gray-{50,{100..900..100},950}");
+@source inline("from-gray-{50,{100..900..100},950}");
+@source inline("via-gray-{50,{100..900..100},950}");
+@source inline("to-gray-{50,{100..900..100},950}");
+@source inline("bg-neutral-{50,{100..900..100},950}");
+@source inline("text-neutral-{50,{100..900..100},950}");
+@source inline("border-neutral-{50,{100..900..100},950}");
+@source inline("from-neutral-{50,{100..900..100},950}");
+@source inline("via-neutral-{50,{100..900..100},950}");
+@source inline("to-neutral-{50,{100..900..100},950}");
+@source inline("bg-zinc-{50,{100..900..100},950}");
+@source inline("text-zinc-{50,{100..900..100},950}");
+@source inline("border-zinc-{50,{100..900..100},950}");
+@source inline("ring-zinc-{50,{100..900..100},950}");
+@source inline("divide-zinc-{50,{100..900..100},950}");
+@source inline("from-zinc-{50,{100..900..100},950}");
+@source inline("via-zinc-{50,{100..900..100},950}");
+@source inline("to-zinc-{50,{100..900..100},950}");
+@source inline("bg-slate-{50,{100..900..100},950}");
+@source inline("text-slate-{50,{100..900..100},950}");
+@source inline("border-slate-{50,{100..900..100},950}");
+@source inline("from-slate-{50,{100..900..100},950}");
+@source inline("via-slate-{50,{100..900..100},950}");
+@source inline("to-slate-{50,{100..900..100},950}");
+@source inline("bg-violet-{50,{100..900..100},950}");
+@source inline("text-violet-{50,{100..900..100},950}");
+@source inline("border-violet-{50,{100..900..100},950}");
+@source inline("from-violet-{50,{100..900..100},950}");
+@source inline("via-violet-{50,{100..900..100},950}");
+@source inline("to-violet-{50,{100..900..100},950}");
+@source inline("bg-fuchsia-{50,{100..900..100},950}");
+@source inline("text-fuchsia-{50,{100..900..100},950}");
+@source inline("border-fuchsia-{50,{100..900..100},950}");
+@source inline("from-fuchsia-{50,{100..900..100},950}");
+@source inline("to-fuchsia-{50,{100..900..100},950}");
+@source inline("bg-amber-{50,{100..900..100},950}");
+@source inline("text-amber-{50,{100..900..100},950}");
+@source inline("border-amber-{50,{100..900..100},950}");
+@source inline("from-amber-{50,{100..900..100},950}");
+@source inline("to-amber-{50,{100..900..100},950}");
+@source inline("bg-emerald-{50,{100..900..100},950}");
+@source inline("text-emerald-{50,{100..900..100},950}");
+@source inline("border-emerald-{50,{100..900..100},950}");
+@source inline("from-emerald-{50,{100..900..100},950}");
+@source inline("to-emerald-{50,{100..900..100},950}");
+@source inline("bg-rose-{50,{100..900..100},950}");
+@source inline("text-rose-{50,{100..900..100},950}");
+@source inline("border-rose-{50,{100..900..100},950}");
+@source inline("from-rose-{50,{100..900..100},950}");
+@source inline("to-rose-{50,{100..900..100},950}");
+@source inline("bg-blue-{50,{100..900..100},950}");
+@source inline("text-blue-{50,{100..900..100},950}");
+@source inline("border-blue-{50,{100..900..100},950}");
+@source inline("from-blue-{50,{100..900..100},950}");
+@source inline("to-blue-{50,{100..900..100},950}");
+@source inline("bg-white,bg-black,bg-transparent,text-white,text-black");
+@source inline("border-white,border-black,border-transparent");
+@source inline("from-white,from-black,to-white,to-black,via-white,via-black");
 
 :root {
   --background: #ffffff;
@@ -22,5 +126,5 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
 }
