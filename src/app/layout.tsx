@@ -29,7 +29,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       style={{ colorScheme: "light" }}
     >
-      <body className="min-h-full flex flex-col bg-zinc-100 text-zinc-900">
+      <body className="min-h-full flex flex-col text-zinc-900">
         {children}
       </body>
     </html>
